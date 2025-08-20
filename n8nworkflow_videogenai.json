@@ -1,0 +1,537 @@
+{
+  "name": "My workflow 2 copy",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/google/veo-3/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.api_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "Wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": {\n    \"prompt\": \"{{ $('get prompt').item.json.prompt.trim() }}\",\n    \"resolution\": \"720p\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -624,
+        32
+      ],
+      "id": "5ebfbab1-adf1-4a5e-96dc-8f08bd314a14",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6d8c8e5d-6a7c-4338-b36e-c08c6690d466",
+              "name": "api_token",
+              "value": "YOUR_API_TOKEN",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -832,
+        32
+      ],
+      "id": "faf415ea-5222-42b9-bb6f-bcf9da852e11",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        32
+      ],
+      "id": "3c46ba5d-2033-4856-a2e6-7e8e1384761e",
+      "name": "Wait1",
+      "webhookId": "226c86e2-d8d1-423b-b106-31e5f43247d7"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.replicate.com/v1/predictions/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Edit Fields').item.json.api_token}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -208,
+        32
+      ],
+      "id": "59f116a3-684a-46e8-b906-b236fd199ee2",
+      "name": "check"
+    },
+    {
+      "parameters": {
+        "amount": 35
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        336
+      ],
+      "id": "57b9dbad-1fe0-407d-8ce4-09ff1e097622",
+      "name": "Wait2",
+      "webhookId": "235f7f8d-f4fc-40ab-abe1-5e743267634f"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        208
+      ],
+      "id": "3eb317dd-bf76-4fc1-a421-bfded4b0901f",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "01f1eb5b-1dc2-4f05-b6b7-ed0ee2e0085f",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        32
+      ],
+      "id": "379f5d51-4925-492f-aa7f-e1c432de4cbe",
+      "name": "success"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "937eca21-5a18-48ea-8996-1de9a91acdd8",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        128
+      ],
+      "id": "a0d28685-b838-495b-ad75-4ece6082e04c",
+      "name": "fail"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "689946cd-7c94-4892-b1bc-b5da0f684f87",
+              "name": "response",
+              "value": "={{ { success: true, video_url: $json.output, prediction_id: $json.id, status: $json.status, message: 'Video generated successfully' } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "c16ccbac-0f23-4903-9111-97f7ae5a1a94",
+      "name": "success response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6db66c98-237a-44b1-bc1f-edc4003ad259",
+              "name": "final_result",
+              "value": "={{ $json.response }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "41f19e69-209b-4203-b0f1-9320f92fedbf",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const url = $json.final_result?.video_url;\nif (!url) return [{ json: { error: \"No video URL found\" } }];\nreturn [{ json: { video_url: url } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e78d199c-f826-48f3-894d-3b932e28745e",
+      "name": "Normalize the URL"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "10b8946a-bd9e-4191-b0b1-84393335705f",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseContentType": "application/json"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        -16
+      ],
+      "id": "b242ed4d-a4b9-43d1-a164-8f839fc881ad",
+      "name": "Webhook1",
+      "webhookId": "10b8946a-bd9e-4191-b0b1-84393335705f"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video_url || $json.final_result?.video_url || $json.output }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        -16
+      ],
+      "id": "5f935fa1-7f86-4977-95f4-4982a881738b",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "62b48766-d323-4d7a-b0d3-05cee933a3f1",
+              "name": "prompt",
+              "value": "={{ $json[\"body\"][\"prompt\"].trim().replace(/^=+/, \"\") }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1136,
+        -16
+      ],
+      "id": "21e122b1-8526-4d7f-a60c-a577a95c17fa",
+      "name": "get prompt"
+    },
+    {
+      "parameters": {
+        "content": "## NOTE \nReplace api_token with your [Replicate AI Token](https://replicate.com/home)\nGet VEO 3 Api [Here](https://replicate.com/google/veo-3)"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1184,
+        176
+      ],
+      "typeVersion": 1,
+      "id": "cbd2a42f-e609-47a5-ac37-c8ea9dc80b8e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        -16
+      ],
+      "id": "86473d53-a764-4a28-b0be-af4132ea1234",
+      "name": "Wait",
+      "webhookId": "07766d30-6896-487b-9110-e2cf81a10f94"
+    },
+    {
+      "parameters": {
+        "content": "# AI VIDEO GENERATOR CHATBOT \n### Unleash the power of Google VEO3 through an interactive chatbot built with n8n and Replicate API",
+        "height": 176,
+        "width": 816
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "da112bf0-6827-4334-9e79-553434d97ef5",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check": {
+      "main": [
+        [
+          {
+            "node": "success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "success": {
+      "main": [
+        [
+          {
+            "node": "success response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fail": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "success response": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Normalize the URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "get prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize the URL": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get prompt": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6d21bd43-aa64-482d-baa7-278da6f30c2e",
+  "meta": {
+    "instanceId": "cb4c8c676c7bc105ce7a89f5ff4867d14ff17d3c6ab58c42328aad5e7d71b1c6"
+  },
+  "id": "yOehdLK3eXPoxatS",
+  "tags": []
+}
