@@ -43,7 +43,7 @@
         <div class="hint">Generate Videos from text.</div>
       </div>
       <form id="form" class="composer">
-        <input id="prompt" placeholder="e.g., doraemon surfing at sunrise" autocomplete="off" required />
+        <input id="prompt" placeholder="e.g., man surfing at sunrise" autocomplete="off" required />
         <button type="submit">Send</button>
       </form>
     </div>
@@ -51,7 +51,7 @@
 
   <script>
     // set this to YOUR n8n webhook URL
-    const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/make-video';
+    const N8N_WEBHOOK_URL = 'https://3d0762247002.ngrok-free.app/home/workflows/webhook/make-video';
 
     const thread = document.getElementById('thread');
     const form = document.getElementById('form');
