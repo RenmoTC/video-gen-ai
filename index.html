@@ -40,53 +40,49 @@
         <h1>Video Bot</h1>
       </header>
       <div id="thread" class="thread">
-        <div class="hint">Generate Videos from text.</div>
+        <div class="hint">Type a prompt to generate a video. It will appear below with a download button.</div>
       </div>
       <form id="form" class="composer">
-        <input id="prompt" placeholder="e.g., man surfing at sunrise" autocomplete="off" required />
+        <input id="prompt" placeholder="e.g., doraemon surfing at sunrise" autocomplete="off" required />
         <button type="submit">Send</button>
       </form>
     </div>
   </div>
 
   <script>
-    // set this to YOUR n8n webhook URL
+    // 🔗 Set this to your n8n Webhook (Trigger) Production URL
     const N8N_WEBHOOK_URL = 'https://3d0762247002.ngrok-free.app/webhook/make-video';
 
     const thread = document.getElementById('thread');
     const form = document.getElementById('form');
     const promptEl = document.getElementById('prompt');
 
-    // bubble animation
     function addUser(text){
       const b = document.createElement('div');
       b.className = 'bubble user';
       b.textContent = text;
       thread.appendChild(b); thread.scrollTop = thread.scrollHeight;
     }
-    // typing animation
     function addTyping(){
       const b = document.createElement('div');
       b.className = 'bubble assistant';
       b.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
       thread.appendChild(b); thread.scrollTop = thread.scrollHeight;
-      return b; 
+      return b; // return element so we can replace it later
     }
-    // error msg 
     function addError(msg){
       const b = document.createElement('div'); b.className = 'bubble assistant';
       b.textContent = '⚠️ ' + msg; thread.appendChild(b); thread.scrollTop = thread.scrollHeight;
     }
-    // video player function
     function addVideo(url){
       const wrap = document.createElement('div'); wrap.className = 'bubble assistant';
       wrap.innerHTML = '<div class="videoCard">\n  <video controls playsinline autoplay src="'+url+'"></video>\n  <div class="row">\n    <a class="dl" href="'+url+'" download>Download MP4</a>\n  </div>\n</div>';
       thread.appendChild(wrap); thread.scrollTop = thread.scrollHeight;
     }
 
-    //  call n8n webhook
     async function postJSONWithVideo(prompt){
-      // send user prompt to workflow
+      // POST to n8n; your workflow should respond either with mp4 (binary),
+      // a redirect to mp4, or JSON { video_url }
       const res = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,21 +91,22 @@
 
       const ct = (res.headers.get('content-type') || '').toLowerCase();
 
-      // if webhook streams mp4 directly
       if (ct.includes('video/mp4')) {
+        // n8n streamed the video directly
         const blob = await res.blob();
         return URL.createObjectURL(blob);
       }
 
-      // fallback: check if response is a file
+      // If server followed a redirect to an mp4, some servers keep generic CT; try blob anyway
       if (res.redirected || res.ok && !ct || (!ct.includes('json') && !ct.includes('text/html'))) {
         try {
           const blob = await res.blob();
-          if (blob.size > 1024) return URL.createObjectURL(blob); // big enough = video
+          // crude type check: blob size > 1KB => probably a file
+          if (blob.size > 1024) return URL.createObjectURL(blob);
         } catch {}
       }
 
-      // if n8n returns JSON with a url
+      // JSON path
       if (ct.includes('application/json')) {
         const data = await res.json();
         const url = data.video_url || data.url || data.output;
@@ -119,9 +116,10 @@
         return URL.createObjectURL(blob);
       }
 
-      // if output is HTML, try to grab <video src="...">
+      // HTML path (if your n8n returns an HTML page with a <video>)
       if (ct.includes('text/html')) {
         const html = await res.text();
+        // naive extraction of first src in a <video> tag
         const m = html.match(/<video[^>]*src=["']([^"']+)["']/i);
         if (m) {
           const vid = await fetch(m[1]);
@@ -131,26 +129,25 @@
         throw new Error('Got HTML but no <video> src');
       }
 
-      // last ditch effort: just blob it
+      // Fallback: try to treat as file
       const blob = await res.blob();
       if (blob.size > 0) return URL.createObjectURL(blob);
       throw new Error('Unexpected response type');
     }
 
-    // handle user hitting send
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const text = promptEl.value.trim();
       if (!text) return;
 
-      addUser(text);     // show user msg
+      addUser(text);
       promptEl.value = '';
-      const typing = addTyping(); "
+      const typing = addTyping();
 
       try {
         const url = await postJSONWithVideo(text);
         typing.remove();
-        addVideo(url);   // show video in chat
+        addVideo(url);
       } catch (err) {
         typing.remove();
         addError(err.message || 'Something went wrong');
@@ -159,4 +156,3 @@
   </script>
 </body>
 </html>
-
